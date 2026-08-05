@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robot Control Panel</title>
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #fdf4f8 0%, #f3f4f6 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    color: #555;
+  }
+
+  h2 {
+    color: #8b5cf6;
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 26px;
+  }
+
+  .control-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 130px);
+    grid-template-rows: repeat(3, 130px);
+    gap: 18px;
+    justify-items: center;
+    align-items: center;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  .btn {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: #f7fee7;
+    font-size: 46px;
+    color: #65a30d;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(163, 230, 53, 0.4);
+    border: 1px solid rgba(132, 204, 22, 0.4);
+  }
+
+  .btn-text {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 4px;
+    color: #65a30d;
+  }
+
+  .btn:active {
+    transform: translateY(2px) scale(0.96);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn:hover {
+    background-color: #ecfccb;
+    box-shadow: 0 6px 16px rgba(132, 204, 22, 0.3);
+    border-color: rgba(101, 163, 13, 0.6);
+  }
+
+  .btn.up-down, .btn.left-right { border-radius: 50%; }
+  
+  .btn.forward  { grid-column: 2; grid-row: 1; }
+  .btn.right    { grid-column: 3; grid-row: 2; }
+  .btn.left     { grid-column: 1; grid-row: 2; }
+  .btn.backward { grid-column: 2; grid-row: 3; }
+
+  .btn.stop {
+    grid-column: 2;
+    grid-row: 2;
+    background-color: #fbcfe8;
+    color: #be185d;
+    border-radius: 50%;
+    font-size: 17px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(244, 114, 182, 0.4);
+    border: 1px solid rgba(236, 72, 153, 0.4);
+  }
+
+  .btn.stop:hover {
+    background-color: #f472b6;
+    color: #fff;
+    border-color: rgba(219, 39, 119, 0.6);
+  }
+
+  .voice-section {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 440px;
+    width: 100%;
+    gap: 15px;
+  }
+
+  .voice-btn {
+    background-color: #ddd6fe;
+    color: #6d28d9;
+    border: 1px solid rgba(196, 181, 253, 0.8);
+    padding: 14px 28px;
+    font-size: 17px;
+    border-radius: 32px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(167, 139, 250, 0.25);
+    transition: 0.3s;
+  }
+
+  .voice-btn:hover {
+    background-color: #c4b5fd;
+    border-color: rgba(139, 92, 246, 0.8);
+  }
+
+  .voice-status {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 16px 30px;
+    border-radius: 30px;
+    box-shadow: 0 10px 25px rgba(167, 139, 250, 0.15);
+    border: 1px solid rgba(216, 180, 254, 0.6);
+    font-size: 14px;
+    color: #8b5cf6;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+
+  <h2>Robot Control Panel</h2>
+
+  <div class="control-pad">
+    <button class="btn forward up-down" onclick="sendCommand('forward')" title="Forward">
+      <span>↑</span>
+      <span class="btn-text">Forward</span>
+    </button>
+    
+    <button class="btn right left-right" onclick="sendCommand('right')" title="Right">
+      <span>→</span>
+      <span class="btn-text">Right</span>
+    </button>
+    
+    <button class="btn stop" onclick="sendCommand('stop')" title="Stop">
+      Stop
+    </button>
+    
+    <button class="btn left left-right" onclick="sendCommand('left')" title="Left">
+      <span>←</span>
+      <span class="btn-text">Left</span>
+    </button>
+    
+    <button class="btn backward up-down" onclick="sendCommand('backward')" title="Backward">
+      <span>↓</span>
+      <span class="btn-text">Backward</span>
+    </button>
+  </div>
+
+  <div class="voice-section">
+    <button class="voice-btn" onclick="startVoiceRecognition()">
+      🎤 <span>Voice Command</span>
+    </button>
+    <div id="voiceStatus" class="voice-status">Click to speak (forward, left, right, stop, backward)</div>
+  </div>
+
+  <script>
+    function sendCommand(cmd) {
+      const voiceStatus = document.getElementById('voiceStatus');
+      voiceStatus.innerText = `Sending command: ${cmd}...`;
+      voiceStatus.style.color = '#a78bfa';
+
+      fetch('update_command.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'command=' + encodeURIComponent(cmd)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          voiceStatus.innerText = `Command executed: "${cmd}"`;
+          voiceStatus.style.color = '#65a30d';
+        } else {
+          voiceStatus.innerText = 'Error: ' + data.message;
+          voiceStatus.style.color = '#f87171';
+        }
+      })
+      .catch(err => {
+        voiceStatus.innerText = 'Connection Failed';
+        voiceStatus.style.color = '#f87171';
+      });
+    }
+
+    function startVoiceRecognition() {
+      const voiceStatus = document.getElementById('voiceStatus');
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        voiceStatus.innerText = 'Speech recognition not supported';
+        voiceStatus.style.color = '#f87171';
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      voiceStatus.innerText = 'Listening...';
+      voiceStatus.style.color = '#ca8a04';
+
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const speechResult = event.results[0][0].transcript.trim().toLowerCase();
+        voiceStatus.innerText = `Heard: "${speechResult}"`;
+
+        const commandMap = {
+          'forward': 'forward',
+          'ahead': 'forward',
+          'backward': 'backward',
+          'back': 'backward',
+          'left': 'left',
+          'right': 'right',
+          'stop': 'stop'
+        };
+
+        let matchedCmd = null;
+        for (const key in commandMap) {
+          if (speechResult.includes(key)) {
+            matchedCmd = commandMap[key];
+            break;
+          }
+        }
+
+        if (matchedCmd) {
+          sendCommand(matchedCmd);
+        } else {
+          voiceStatus.innerText = `Unknown command: "${speechResult}"`;
+          voiceStatus.style.color = '#f87171';
+        }
+      };
+
+      recognition.onerror = function(event) {
+        voiceStatus.innerText = 'Microphone error occurred';
+        voiceStatus.style.color = '#f87171';
+      };
+
+      recognition.onspeechend = function() {
+        recognition.stop();
+      };
+    }
+  </script>
+
+</body>
+</html>
